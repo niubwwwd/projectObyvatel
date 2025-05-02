@@ -1,12 +1,9 @@
 const timeElement = document.getElementById('time');
-const params = new URLSearchParams(window.location.search);
 const options = { year: 'numeric', month: 'numeric', day: 'numeric' };
 
 function setClock() {
   const date = new Date();
-  timeElement.innerHTML = `Czas: ${
-    date.toTimeString().split(' ')[0]
-  } ${date.toLocaleDateString('pl-PL', options)}`;
+  timeElement.innerHTML = `Czas: ${date.toTimeString().split(' ')[0]} ${date.toLocaleDateString('pl-PL', options)}`;
 }
 
 setClock();
@@ -35,9 +32,7 @@ if (getMobileOperatingSystem() == 2) {
 
 const manifestLink = document.createElement('link');
 manifestLink.rel = 'manifest';
-manifestLink.href = `data:application/manifest+json;base64,${btoa(
-  JSON.stringify(webManifest)
-)}`;
+manifestLink.href = `data:application/manifest+json;base64,${btoa(JSON.stringify(webManifest))}`;
 document.head.prepend(manifestLink);
 
 const unfoldElement = document.querySelector('.info_holder');
@@ -45,45 +40,38 @@ unfoldElement.addEventListener('click', () => {
   unfoldElement.classList.toggle('unfolded');
 });
 
-const imageParam = params.get('image');
-if (imageParam) {
-  document.querySelector(
-    '.id_own_image'
-  ).style.backgroundImage = `url(${imageParam})`;
-}
+// Odczyt danych z localStorage
+const userData = JSON.parse(localStorage.getItem('userData'));
 
-const birthday = params.get('birthday');
-const sex = params.get('sex');
-const setData = (id, value) => {
-  const element = document.getElementById(id);
-  if (element) element.innerHTML = value || '';
-};
+if (userData) {
+  const setData = (id, value) => {
+    const element = document.getElementById(id);
+    if (element) element.innerHTML = value || '';
+  };
 
-setData('name', params.get('name').toUpperCase());
-setData('surname', params.get('surname').toUpperCase());
-setData('nationality', params.get('nationality').toUpperCase());
-setData('birthday', birthday);
-setData('familyName', params.get('familyName'));
-setData('sex', sex);
-setData('fathersFamilyName', params.get('fathersFamilyName'));
-setData('mothersFamilyName', params.get('mothersFamilyName'));
-setData('birthPlace', params.get('birthPlace'));
-setData('countryOfBirth', params.get('countryOfBirth'));
-setData(
-  'adress',
-  `ul. ${params.get('adress1') || ''}<br>${params.get('adress2') || ''} ${
-    params.get('city') || ''
-  }`
-);
-setData('checkInDate', params.get('checkInDate'));
+  setData('name', userData.name);
+  setData('surname', userData.surname);
+  setData('nationality', userData.nationality);
+  setData('birthday', userData.birthday);
+  setData('familyName', userData.familyName);
+  setData('sex', userData.sex);
+  setData('fathersFamilyName', userData.fathersFamilyName);
+  setData('mothersFamilyName', userData.mothersFamilyName);
+  setData('birthPlace', userData.birthPlace);
+  setData('countryOfBirth', userData.countryOfBirth);
+  setData('adress', `ul. ${userData.adress1 || ''}<br>${userData.adress2 || ''} ${userData.city || ''}`);
+  setData('checkInDate', userData.checkInDate);
 
-if (birthday) {
-  const [day, month, year] = birthday.split('.').map((v) => parseInt(v, 10));
-  const adjustedMonth = year >= 2000 ? 20 + month : month;
+  if (userData.birthday) {
+    const [day, month, year] = userData.birthday.split('.').map((v) => parseInt(v, 10));
+    const adjustedMonth = year >= 2000 ? 20 + month : month;
+    const peselSuffix = userData.sex?.toLowerCase() === 'mężczyzna' ? '0295' : '0382';
+    const pesel = `${year % 100}${adjustedMonth.toString().padStart(2, '0')}${day.toString().padStart(2, '0')}${peselSuffix}7`;
+    setData('pesel', pesel);
+  }
 
-  const peselSuffix = sex?.toLowerCase() === 'mężczyzna' ? '0295' : '0382';
-  const pesel = `${year % 100}${adjustedMonth.toString().padStart(2, '0')}${day
-    .toString()
-    .padStart(2, '0')}${peselSuffix}7`;
-  setData('pesel', pesel);
+  // Ustawienie zdjęcia
+  if (userData.image) {
+    document.querySelector('.id_own_image').style.backgroundImage = `url(${userData.image})`;
+  }
 }
