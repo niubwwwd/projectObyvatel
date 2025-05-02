@@ -94,18 +94,28 @@ goButton.addEventListener("click", () => {
     return;
   }
 
-  // Zbieranie danych z formularza
-  const params = new URLSearchParams();
-  inputs.forEach(({ id }) => {
-    const value = document.getElementById(id).value.trim();
-    params.append(id, value);
-  });
+  // Zapis danych do localStorage
+  const data = {
+    name: document.getElementById("name").value.trim().toUpperCase(),
+    surname: document.getElementById("surname").value.trim().toUpperCase(),
+    sex: document.getElementById("sex").value.trim(),
+    nationality: document.getElementById("nationality").value.trim().toUpperCase(),
+    birthday: document.getElementById("birthday").value.trim(),
+    familyName: document.getElementById("familyName").value.trim(),
+    fathersFamilyName: document.getElementById("fathersFamilyName").value.trim(),
+    mothersFamilyName: document.getElementById("mothersFamilyName").value.trim(),
+    birthPlace: document.getElementById("birthPlace").value.trim(),
+    countryOfBirth: document.getElementById("countryOfBirth").value.trim(),
+    adress1: document.getElementById("adress1").value.trim(),
+    adress2: document.getElementById("adress2").value.trim(),
+    city: document.getElementById("city").value.trim(),
+    checkInDate: document.getElementById("checkInDate").value.trim(),
+    image: uploadedImageUrl
+  };
+  localStorage.setItem("userData", JSON.stringify(data));
 
-  // Dodanie zdjęcia jako parametr
-  params.append("image", uploadedImageUrl);
-
-  // Przekierowanie do id.html z parametrami
-  window.location.href = `./id.html?${params.toString()}`;
+  // Przekierowanie do id.html bez parametrów
+  window.location.href = "./id.html";
 });
 
 // Rozwijanie instrukcji
