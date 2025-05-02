@@ -1,99 +1,119 @@
-const upload = document.querySelector('.upload');
-const imageInput = document.createElement('input');
+// Funkcja do walidacji daty w formacie DD.MM.YYYY
+function isValidDate(dateString) {
+  const regex = /^\d{2}\.\d{2}\.\d{4}$/;
+  if (!regex.test(dateString)) return false;
 
-imageInput.type = 'file';
-imageInput.accept = '.jpeg,.png,.gif';
+  const [day, month, year] = dateString.split('.').map(Number);
+  const date = new Date(year, month - 1, day);
+  return (
+    date.getFullYear() === year &&
+    date.getMonth() + 1 === month &&
+    date.getDate() === day &&
+    year >= 1900 &&
+    year <= new Date().getFullYear()
+  );
+}
 
-document.querySelectorAll('.input_holder').forEach((element) => {
-  const input = element.querySelector('.input');
-  input.addEventListener('click', () => {
-    element.classList.remove('error_shown');
-  });
-});
+// Funkcja do walidacji pól
+function validateInputs(inputs) {
+  let isValid = true;
+  inputs.forEach((input) => {
+    const inputElement = document.getElementById(input.id);
+    const errorElement = inputElement.parentElement.querySelector(".error");
+    const value = inputElement.value.trim();
 
-upload.addEventListener('click', () => imageInput.click());
-
-imageInput.addEventListener('change', async () => {
-  resetUploadState();
-
-  const file = imageInput.files[0];
-  if (!file) return;
-
-  const formData = new FormData();
-  formData.append('image', file);
-
-  try {
-    const response = await fetch('https://api.imgur.com/3/image', {
-      method: 'POST',
-      headers: {
-        Authorization: 'Client-ID 774f3ba80197c47',
-      },
-      body: formData,
-    });
-    const result = await response.json();
-
-    if (result?.data?.link) {
-      updateUploadState(result.data.link);
+    if (!value || (input.validate && !input.validate(value))) {
+      inputElement.parentElement.classList.add("error_shown");
+      isValid = false;
     } else {
-      showErrorState();
-    }
-  } catch {
-    showErrorState();
-  }
-});
-
-document.querySelector('.go').addEventListener('click', () => {
-  const emptyFields = [];
-  const params = new URLSearchParams();
-
-  if (!upload.hasAttribute('selected')) {
-    emptyFields.push(upload);
-    upload.classList.add('error_shown');
-  } else {
-    params.append('image', upload.getAttribute('selected'));
-  }
-
-  document.querySelectorAll('.input_holder').forEach((element) => {
-    const input = element.querySelector('.input');
-    params.append(input.id, input.value);
-
-    if (isEmpty(input.value)) {
-      emptyFields.push(element);
-      element.classList.add('error_shown');
+      inputElement.parentElement.classList.remove("error_shown");
     }
   });
+  return isValid;
+}
 
-  if (emptyFields.length > 0) {
-    emptyFields[0].scrollIntoView();
-  } else {
-    forwardToId(params);
-  }
+// Obsługa uploadu zdjęcia
+const uploadElement = document.querySelector(".upload");
+const uploadImage = document.querySelector(".upload_uploaded");
+let uploadedImageUrl = null;
+
+uploadElement.addEventListener("click", () => {
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = "image/*";
+  input.onchange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        uploadedImageUrl = e.target.result;
+        uploadImage.src = uploadedImageUrl;
+        uploadElement.classList.add("upload_loaded");
+        uploadElement.classList.remove("upload_loading");
+        uploadElement.querySelector(".error").style.opacity = 0;
+      };
+      reader.readAsDataURL(file);
+      uploadElement.classList.add("upload_loading");
+    }
+  };
+  input.click();
 });
 
-function isEmpty(value) {
-  return /^\s*$/.test(value);
-}
+// Lista pól do walidacji
+const inputs = [
+  { id: "name" },
+  { id: "surname" },
+  { id: "sex" },
+  { id: "nationality" },
+  { id: "birthday", validate: isValidDate },
+  { id: "familyName" },
+  { id: "fathersFamilyName" },
+  { id: "mothersFamilyName" },
+  { id: "birthPlace" },
+  { id: "countryOfBirth" },
+  { id: "adress1" },
+  { id: "adress2" },
+  { id: "city" },
+  { id: "checkInDate", validate: isValidDate },
+];
 
-function resetUploadState() {
-  upload.classList.remove('upload_loaded', 'upload_loading', 'error_shown');
-  upload.removeAttribute('selected');
-}
+// Obsługa przycisku "wejdź"
+const goButton = document.querySelector(".go");
+goButton.addEventListener("click", () => {
+  // Walidacja pól
+  const isValid = validateInputs(inputs);
 
-function updateUploadState(url) {
-  upload.classList.add('upload_loaded');
-  upload.setAttribute('selected', url);
-  upload.querySelector('.upload_uploaded').src = url;
-}
+  // Walidacja zdjęcia
+  let photoValid = true;
+  if (!uploadedImageUrl) {
+    uploadElement.querySelector(".error").style.opacity = 1;
+    photoValid = false;
+  }
 
-function showErrorState() {
-  upload.classList.add('error_shown');
-}
+  if (!isValid || !photoValid) {
+    return;
+  }
 
-function forwardToId(params) {
-  location.href = `/yObywatel/id?${params}`;
-}
+  // Zbieranie danych z formularza
+  const params = new URLSearchParams();
+  inputs.forEach(({ id }) => {
+    const value = document.getElementById(id).value.trim();
+    params.append(id, value);
+  });
 
-const guide = document.querySelector('.guide_holder');
-guide.addEventListener('click', () => {
-  guide.classList.toggle('unfolded');
+  // Dodanie zdjęcia jako parametr
+  params.append("image", uploadedImageUrl);
+
+  // Przekierowanie do id.html z parametrami
+  window.location.href = `id.html?${params.toString()}`;
+});
+
+// Rozwijanie instrukcji
+const guideHolder = document.querySelector(".guide_holder");
+const arrow = document.querySelector(".arrow");
+guideHolder.addEventListener("click", () => {
+  guideHolder.classList.toggle("unfolded");
+  arrow.style.transform = guideHolder.classList.contains("unfolded")
+    ? "rotate(90deg)"
+    : "rotate(0deg)";
 });
