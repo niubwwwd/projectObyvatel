@@ -105,7 +105,7 @@ goButton.addEventListener("click", () => {
   params.append("image", uploadedImageUrl);
 
   // Przekierowanie do id.html z parametrami
-  window.location.href = `id.html?${params.toString()}`;
+  window.location.href = `./id.html?${params.toString()}`;
 });
 
 // Rozwijanie instrukcji
